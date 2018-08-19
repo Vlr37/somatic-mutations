@@ -32,7 +32,7 @@ task vcf_evaluation {
 
 	runtime {
 		docker: "pkrusche/hap.py"
-  }
+	}
 
 	output {
 		File file1 = prefix + ".extended.csv"
