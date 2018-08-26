@@ -1,10 +1,10 @@
 workflow validation_pipeline {
 	File truth_vcf
 	File query_vcf
-  	File bedfile
+ 	File bedfile
 	File reference_fasta
 	File reference_fasta_index
-  	String prefix
+	String prefix
 
 	call vcf_evaluation {
 		input:
@@ -14,6 +14,23 @@ workflow validation_pipeline {
 			prefix = prefix,
 			reference_fasta_index = reference_fasta_index,
 			reference_fasta = reference_fasta
+	}
+
+	call copy {
+		input:
+			files = [
+				vcf_evaluation.stratified_summary,
+				vcf_evaluation.metrics,
+				vcf_evaluation.roc_snp_pass,
+				vcf_evaluation.roc_snp,
+				vcf_evaluation.roc_all,
+				vcf_evaluation.roc,
+				vcf_evaluation.runinfo,
+				vcf_evaluation.summary,
+				vcf_evaluation.vcf,
+				vcf_evaluation.vcf_indexed
+				],
+			destination = results_folder + ${identifier}
 	}
 }
 
@@ -27,24 +44,41 @@ task vcf_evaluation {
 	String prefix
 
 	command {
-		/opt/hap.py/bin/hap.py ${truth_vcf} ${query_vcf} -f ${bedfile} -o ${prefix} -r ${reference_fasta} --verbose --gender "none" -R ${bedfile}
-	}
+		/opt/hap.py/bin/hap.py ${truth_vcf} ${query_vcf} \
+		-f ${bedfile} -o ${prefix} -r ${reference_fasta} \
+		--verbose --gender "none" --preprocess-truth \
+		--write-vcf
+		}
+
 
 	runtime {
 		docker: "pkrusche/hap.py"
 	}
 
 	output {
-		File file1 = prefix + ".extended.csv"
-		File file2 = prefix + ".metrics.json.gz"
-		File file3 = prefix + ".roc.Locations.SNP.PASS.csv.gz"
-		File file4 = prefix + ".roc.Locations.SNP.csv.gz"
-		File file5 = prefix + ".roc.all.csv.gz"
-		File file6 = prefix + ".roc.tsv"
-		File file7 = prefix + ".runinfo.json"
-		File file8 = prefix + ".summary.csv"
-		File file9 = prefix + ".vcf.gz"
-		File file10 = prefix + ".vcf.gz.tbi"
+		File stratified_summary = prefix + ".extended.csv"
+		File metrics = prefix + ".metrics.json.gz"
+		File roc_snp_pass = prefix + ".roc.Locations.SNP.PASS.csv.gz"
+		File roc_snp = prefix + ".roc.Locations.SNP.csv.gz"
+		File roc_all = prefix + ".roc.all.csv.gz"
+		File roc = prefix + ".roc.tsv"
+		File runinfo = prefix + ".runinfo.json"
+		File summary = prefix + ".summary.csv"
+		File vcf = prefix + ".vcf.gz"
+		File vcf_indexed = prefix + ".vcf.gz.tbi"
 	}
 }
 
+task copy {
+	Array[File] files
+	String destination
+
+	command {
+		mkdir -p ${destination}
+		cp -L -R -u ${sep=' ' files} ${destination}
+	}
+
+	output {
+		Array[File] out = files
+	}
+}

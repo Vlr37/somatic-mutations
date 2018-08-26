@@ -1,8 +1,10 @@
 {
+  "validation_pipeline.prefix":"test",
   "validation_pipeline.bedfile":"/pipelines/validation/PG_Conf_chr21.bed.gz",
   "validation_pipeline.truth_vcf":"/pipelines/validation/PG_NA12878_hg38-chr21.vcf.gz",
-  "validation_pipeline.query_vcf":"/pipelines/validation/NA12878_chr21.vcf.gz",
+  "validation_pipeline.query_vcf":"/pipelines/validation/NA12878-Platypus-chr21.vcf.gz",
   "validation_pipeline.reference_fasta":"/pipelines/validation/chr21.fa",
   "validation_pipeline.reference_fasta_index":"/pipelines/validation/chr21.fa.fai",
-  "validation_pipeline.prefix":"test"
+  "validation_pipeline.results_folder":"/pipelines/validation/results",
+  "validation_pipeline.identifier":"test"
 }
