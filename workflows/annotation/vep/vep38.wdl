@@ -41,8 +41,8 @@ task vep_annotation {
     }
 
     output {
-        File out = "${result_name}.gz"
-        File summary = "${result_name}.gz" + "_summary.html"
+        File out = result_name + ".gz"
+        File summary = result_name + ".gz_summary.html"
     }
 }
 
@@ -59,7 +59,7 @@ task vep_filter_important {
     }
 
     output {
-        File out_2 = "${filter_name}"
+        File out_2 = filter_name
     }
 }
 

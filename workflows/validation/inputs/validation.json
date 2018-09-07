@@ -5,6 +5,5 @@
   "validation_pipeline.query_vcf":"/pipelines/validation/NA12878-Platypus-chr21.vcf.gz",
   "validation_pipeline.reference_fasta":"/pipelines/validation/chr21.fa",
   "validation_pipeline.reference_fasta_index":"/pipelines/validation/chr21.fa.fai",
-  "validation_pipeline.results_folder":"/pipelines/validation/results",
-  "validation_pipeline.identifier":"test"
+  "validation_pipeline.results_folder":"/pipelines/validation/results"
 }

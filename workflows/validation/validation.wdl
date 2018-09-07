@@ -5,6 +5,7 @@ workflow validation_pipeline {
 	File reference_fasta
 	File reference_fasta_index
 	String prefix
+	String results_folder
 
 	call vcf_evaluation {
 		input:
@@ -30,7 +31,7 @@ workflow validation_pipeline {
 				vcf_evaluation.vcf,
 				vcf_evaluation.vcf_indexed
 				],
-			destination = results_folder + ${identifier}
+			destination = results_folder
 	}
 }
 
