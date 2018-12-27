@@ -1,15 +1,19 @@
+version 1.0
+
 workflow sommut_workflow{
-    Array[File] reads
-    Array[String] adapters
-
-    Int threads
-
-    File reference
-    File reference_fai
-    File reference_dict
-
-    String results_folder
-
+    input {
+        Array[File] reads
+        Array[String] adapters
+    
+        Int threads
+    
+        File reference
+        File reference_fai
+        File reference_dict
+    
+        String results_folder
+    }
+    
 
     call report as initial_report_1_call {
       input:
@@ -92,8 +96,8 @@ workflow sommut_workflow{
             bam = picard_readgroups_sort.out,
             bai = picard_indexbam.out,
             reference = reference,
-            referencefai = reference_fai,
-            referencedict = reference_dict
+            reference_fai = reference_fai,
+            reference_dict = reference_dict
     }
 
     call copy as copy_mutect {
@@ -106,25 +110,28 @@ workflow sommut_workflow{
 
 
 task atropos_illumina_trim {
-  Array[File] reads
-  Array[String] adapters
-  Int threads
-  Int q = 18
-  Int e = 0.1
+   input {
+      Array[File] reads
+    Array[String] adapters
+    Int threads
+    Int q = 18
+    Int e = 0.1
+
+   }
 
   command {
     atropos trim \
-    -a ${adapters[0]} \
-    -A ${adapters[1]} \
-    -pe1 ${reads[0]} \
-    -pe2 ${reads[1]} \
-    -o ${basename(reads[0], ".fastq.gz")}_trimmed.fastq.gz \
-    -p ${basename(reads[1], ".fastq.gz")}_trimmed.fastq.gz \
+    -a ~{adapters[0]} \
+    -A ~{adapters[1]} \
+    -pe1 ~{reads[0]} \
+    -pe2 ~{reads[1]} \
+    -o ~{basename(reads[0], ".fastq.gz")}_trimmed.fastq.gz \
+    -p ~{basename(reads[1], ".fastq.gz")}_trimmed.fastq.gz \
     --minimum-length 35 \
     --aligner insert \
-    -q ${q} \
-    -e ${e} \
-    --threads ${threads} \
+    -q ~{q} \
+    -e ~{e} \
+    --threads ~{threads} \
     --correct-mismatches liberal
   }
 
@@ -138,17 +145,19 @@ task atropos_illumina_trim {
 }
 
 task minimap2 {
-    Array[File] reads
-    File reference
-
+    input {
+        Array[File] reads
+        File reference
+    }
+    
     command {
         minimap2 \
         -ax \
         sr \
         -L \
-        ${reference} \
-        ${reads[0]} \
-        ${reads[1]} \
+        ~{reference} \
+        ~{reads[0]} \
+        ~{reads[1]} \
         > aln.sam
     }
 
@@ -161,13 +170,15 @@ task minimap2 {
 }
 
 task samtools_conversion {
-    File sam
-
+    input {
+        File sam
+    }
+    
     command {
         samtools \
         view \
         -bS \
-        ${sam} \
+        ~{sam} \
         > aln.bam
     }
 
@@ -182,11 +193,13 @@ task samtools_conversion {
 }
 
 task picard_readgroups_sort {
-    File bam
-
+    input {
+        File bam
+    }
+    
     command {
         picard AddOrReplaceReadGroups \
-        I= ${bam} \
+        I= ~{bam} \
         O= aln2.bam \
         RGID=4 \
         RGLB=lib1 \
@@ -197,7 +210,7 @@ task picard_readgroups_sort {
     }
 
     runtime {
-        docker: "biocontainers/picard@sha256:1dc72c0ffb8885428860fa97e00f1dd868e8b280f6b7af820a0418692c14ae00"
+        docker: "biocontainers/picard:v2.3.0_cv3"
       }
 
     output {
@@ -207,17 +220,19 @@ task picard_readgroups_sort {
 }
 
 task picard_validation {
-    File bam
-
+    input {
+        File bam
+    }
+    
     command {
         picard ValidateSamFile \
-        I=${bam} \
+        I=~{bam} \
         O=log.txt \
         MODE=SUMMARY
     }
 
     runtime {
-        docker: "biocontainers/picard@sha256:1dc72c0ffb8885428860fa97e00f1dd868e8b280f6b7af820a0418692c14ae00"
+        docker: "biocontainers/picard:v2.3.0_cv3"
       }
 
     output {
@@ -227,15 +242,17 @@ task picard_validation {
 }
 
 task picard_indexbam {
-    File bam
-
+    input {
+        File bam
+    }
+    
     command {
         picard BuildBamIndex \
-        INPUT=${bam}
+        INPUT=~{bam}
     }
 
     runtime {
-        docker: "biocontainers/picard@sha256:1dc72c0ffb8885428860fa97e00f1dd868e8b280f6b7af820a0418692c14ae00"
+        docker: "biocontainers/picard:v2.3.0_cv3"
       }
 
     output {
@@ -245,24 +262,26 @@ task picard_indexbam {
 }
 
 task mutect2 {
-    File bam
-    File bai
-    File reference
-    File reference_fai
-    File reference_dict
-
+    input {
+        File bam
+        File bai
+        File reference
+        File reference_fai
+        File reference_dict
+    }
+    
     command {
         java -jar /usr/GenomeAnalysisTK.jar \
         -T MuTect2 \
-        -R ${reference} \
-        -I:tumor ${bam} \
+        -R ~{reference} \
+        -I:tumor ~{bam} \
         -nct 7 \
         --artifact_detection_mode \
         -o variants.vcf
     }
 
     runtime {
-        docker: "broadinstitute/gatk3@sha256:5ecb139965b86daa9aa85bc531937415d9e98fa8a6b331cb2b05168ac29bc76b"
+        docker: "broadinstitute/gatk:4.0.12.0"
       }
 
     output {
@@ -273,17 +292,18 @@ task mutect2 {
 
 
 task fastp {
-
-    Array[File] reads
-
+    input {
+        Array[File] reads
+    }
+    
     command {
         fastp --cut_by_quality5 --cut_by_quality3 --trim_poly_g --overrepresentation_analysis \
-            -i ${reads[0]} -o ${basename(reads[0], ".fastq.gz")}_cleaned.fastq.gz \
-            --correction -I ${reads[1]} -O ${basename(reads[1], ".fastq.gz")}_cleaned.fastq.gz
+            -i ~{reads[0]} -o ~{basename(reads[0], ".fastq.gz")}_cleaned.fastq.gz \
+            --correction -I ~{reads[1]} -O ~{basename(reads[1], ".fastq.gz")}_cleaned.fastq.gz
     }
 
     runtime {
-        docker: "quay.io/biocontainers/fastp@sha256:1ae5d7ce7801391d9ed8622d7208fd7b0318a3e0c1431a039d3498d483742949" #:0.19.3--hd28b015_0
+        docker: "quay.io/biocontainers/fastp@sha256:1ae5d7ce7801391d9ed8622d7208fd7b0318a3e0c1431a039d3498d483742949" #:0.19.5--hd28b015_0
     }
 
     output {
@@ -294,12 +314,13 @@ task fastp {
 }
 
 task report {
-
-  String sampleName
-  File file
-
+  input {
+    String sampleName
+    File file
+  }
+  
   command {
-    /opt/FastQC/fastqc ${file} -o .
+    /opt/FastQC/fastqc ~{file} -o .
   }
 
   runtime {
@@ -312,12 +333,14 @@ task report {
 }
 
 task copy {
-    Array[File] files
-    String destination
-
+    input {
+        Array[File] files
+        String destination
+    }
+    
     command {
-        mkdir -p ${destination}
-        cp -L -R -u ${sep=' ' files} ${destination}
+        mkdir -p ~{destination}
+        cp -L -R -u ~{sep=' ' files} ~{destination}
     }
 
     output {
