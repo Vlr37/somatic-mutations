@@ -1,10 +1,15 @@
+version 1.0
+
 workflow validation_pipeline {
-	File truth_vcf
-	File query_vcf
- 	File bedfile
-	File reference_fasta
-	File reference_fasta_index
-	String prefix
+    input {
+        File truth_vcf
+        File query_vcf
+        File bedfile
+        File reference_fasta
+        File reference_fasta_index
+        String prefix
+        String results_folder    
+    }
 
 	call vcf_evaluation {
 		input:
@@ -30,22 +35,23 @@ workflow validation_pipeline {
 				vcf_evaluation.vcf,
 				vcf_evaluation.vcf_indexed
 				],
-			destination = results_folder + ${identifier}
+			destination = results_folder
 	}
 }
 
 task vcf_evaluation {
-
-	File truth_vcf
-	File query_vcf
-	File bedfile
-	File reference_fasta
-	File reference_fasta_index
-	String prefix
-
+    input{
+        File truth_vcf
+    	File query_vcf
+    	File bedfile
+    	File reference_fasta
+    	File reference_fasta_index
+    	String prefix
+    }
+	
 	command {
-		/opt/hap.py/bin/hap.py ${truth_vcf} ${query_vcf} \
-		-f ${bedfile} -o ${prefix} -r ${reference_fasta} \
+		/opt/hap.py/bin/hap.py ~{truth_vcf} ~{query_vcf} \
+		-f ~{bedfile} -o ~{prefix} -r ~{reference_fasta} \
 		--verbose --gender "none" --preprocess-truth \
 		--write-vcf
 		}
@@ -70,12 +76,14 @@ task vcf_evaluation {
 }
 
 task copy {
-	Array[File] files
-	String destination
-
+    input {
+        Array[File] files
+    	String destination
+    }
+	
 	command {
-		mkdir -p ${destination}
-		cp -L -R -u ${sep=' ' files} ${destination}
+		mkdir -p ~{destination}
+		cp -L -R -u ~{sep=' ' files} ~{destination}
 	}
 
 	output {
