@@ -1,0 +1,13 @@
+{
+  "genome_aligment.results_folder": "/data/results/tumor",
+  "genome_aligment.reference": "/data/indexes/HUMAN/29/GRCh38.p12.genome.fa",
+  "genome_aligment.adapters":  [
+    "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC",
+    "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT"
+  ],
+  "genome_aligment.threads": 8,
+  "genome_aligment.reads": [
+    "/data/barracuda/Tumor/Tumor_R1.fastq.gz",
+    "/data/barracuda/Tumor/Tumor_R2.fastq.gz"
+  ]
+}

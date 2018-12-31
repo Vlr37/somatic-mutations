@@ -1,12 +1,12 @@
 {
   "sommut_workflow.reads": [
-    "/pipelines/whales/graywhale/GWkidneymother_S1_L001_R1_001.fastq.gz",
-    "/pipelines/whales/graywhale/GWkidneymother_S1_L001_R2_001.fastq.gz"
+    "/data/barracuda/Tumor/Tumor_R1.fastq.gz",
+    "/data/barracuda/Tumor/Tumor_R2.fastq.gz"
   ],
-  "sommut_workflow.threads": 6,
-  "sommut_workflow.reference": "/pipelines/indexes/HUMAN/28/GRCh38.p12.genome.fa",
-  "sommut_workflow.reference_fai": "/pipelines/indexes/HUMAN/28/GRCh38.p12.genome.fa.fai",
-  "sommut_workflow.reference_dict": "/pipelines/indexes/HUMAN/28/GRCh38.p12.genome.dict",
+  "sommut_workflow.threads": 10,
+  "sommut_workflow.reference": "/data/indexes/HUMAN/29/GRCh38.p12.genome.fa",
+  "sommut_workflow.reference_fai": "/data/indexes/HUMAN/29/GRCh38.p12.genome.fa.fai",
+  "sommut_workflow.reference_dict": "/data/indexes/HUMAN/29/GRCh38.p12.genome.dict",
   "sommut_workflow.adapters": [
     "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC",
     "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT"

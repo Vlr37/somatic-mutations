@@ -1,20 +1,18 @@
 version 1.0
 
-workflow sommut_workflow{
+workflow genome_aligment{
     input {
+
         Array[File] reads
         Array[String] adapters
-    
+
         Int threads
-    
+
         File reference
-        File reference_fai
-        File reference_dict
-    
         String results_folder
     }
-    
-call report as initial_report_1_call {
+
+    call report as initial_report_1_call {
       input:
         sampleName = basename(reads[0], ".fastq.gz"),
         file = reads[0]
@@ -89,32 +87,16 @@ call report as initial_report_1_call {
         input:
             bam = picard_readgroups_sort.out
     }
-
-    call mutect2 {
-        input:
-            bam = picard_readgroups_sort.out,
-            bai = picard_indexbam.out,
-            reference = reference,
-            reference_fai = reference_fai,
-            reference_dict = reference_dict
-    }
-
-    call copy as copy_mutect {
-        input:
-            files = mutect2.out,
-            destination = results_folder
-    }
-
 }
 
 
 task atropos_illumina_trim {
    input {
-      Array[File] reads
+    Array[File] reads
     Array[String] adapters
     Int threads
     Int q = 18
-    Int e = 0.1
+    Float e = 0.1
 
    }
 
@@ -148,7 +130,7 @@ task minimap2 {
         Array[File] reads
         File reference
     }
-    
+
     command {
         minimap2 \
         -ax \
@@ -164,7 +146,7 @@ task minimap2 {
         docker: "genomicpariscentre/minimap2@sha256:536d7cc40209d4fd1b700ebec3ef9137ce1d9bc0948998c28b209a39a75458fa"
       }
     output {
-      File out1 = "aln.sam"
+      File out = "aln.sam"
     }
 }
 
@@ -172,7 +154,7 @@ task samtools_conversion {
     input {
         File sam
     }
-    
+
     command {
         samtools \
         view \
@@ -183,51 +165,49 @@ task samtools_conversion {
 
     runtime {
         docker: "biocontainers/samtools@sha256:6644f6b3bb8893c1b10939406bb9f9cda58da368100d8c767037558142631cf3"
-      }
+    }
 
     output {
         File out = "aln.bam"
-      }
+    }
 
 }
 
-task picard_readgroups_sort {
+task picard_readgroups_sort{
     input {
         File bam
     }
-    
     command {
-        picard AddOrReplaceReadGroups \
-        I= ~{bam} \
-        O= aln2.bam \
-        RGID=4 \
-        RGLB=lib1 \
-        RGPL=illumina \
-        RGPU=unit1 \
-        RGSM=20 \
-	    SORT_ORDER=coordinate
+picard AddOrReplaceReadGroups \
+I=~{bam} \
+O=aln2.bam \
+RGID=4 \
+RGLB=lib1 \
+RGPL=illumina \
+RGPU=unit1 \
+RGSM=20 \
+SORT_ORDER=coordinate
     }
 
     runtime {
         docker: "biocontainers/picard:v2.3.0_cv3"
-      }
+    }
 
     output {
         File out = "aln2.bam"
-      }
+    }
 
 }
 
-task picard_validation {
+task picard_validation{
     input {
         File bam
     }
-    
     command {
-        picard ValidateSamFile \
-        I=~{bam} \
-        O=log.txt \
-        MODE=SUMMARY
+    picard ValidataeSamFile \
+    I=~{bam} \
+    O=log.txt \
+    MODE=SUMMARY
     }
 
     runtime {
@@ -236,7 +216,7 @@ task picard_validation {
 
     output {
         File out = "log.txt"
-      }
+    }
 
 }
 
@@ -244,7 +224,7 @@ task picard_indexbam {
     input {
         File bam
     }
-    
+
     command {
         picard BuildBamIndex \
         INPUT=~{bam}
@@ -260,64 +240,12 @@ task picard_indexbam {
 
 }
 
-task mutect2 {
-    input {
-        File bam
-        File bai
-        File reference
-        File reference_fai
-        File reference_dict
-    }
-    
-    command {
-        java -jar /usr/GenomeAnalysisTK.jar \
-        -T MuTect2 \
-        -R ~{reference} \
-        -I:tumor ~{bam} \
-        -nct 7 \
-        --artifact_detection_mode \
-        -o variants.vcf
-    }
-
-    runtime {
-        docker: "broadinstitute/gatk:4.0.12.0"
-      }
-
-    output {
-        File out = "variants.vcf"
-      }
-
-}
-
-
-task fastp {
-    input {
-        Array[File] reads
-    }
-    
-    command {
-        fastp --cut_by_quality5 --cut_by_quality3 --trim_poly_g --overrepresentation_analysis \
-            -i ~{reads[0]} -o ~{basename(reads[0], ".fastq.gz")}_cleaned.fastq.gz \
-            --correction -I ~{reads[1]} -O ~{basename(reads[1], ".fastq.gz")}_cleaned.fastq.gz
-    }
-
-    runtime {
-        docker: "quay.io/biocontainers/fastp@sha256:1ae5d7ce7801391d9ed8622d7208fd7b0318a3e0c1431a039d3498d483742949" #:0.19.5--hd28b015_0
-    }
-
-    output {
-        File report_json = "fastp.json"
-        File report_html = "fastp.html"
-        Array[File] reads_cleaned = [basename(reads[0], ".fastq.gz") + "_cleaned.fastq.gz", basename(reads[1], ".fastq.gz") + "_cleaned.fastq.gz"]
-    }
-}
-
 task report {
   input {
     String sampleName
     File file
   }
-  
+
   command {
     /opt/FastQC/fastqc ~{file} -o .
   }
@@ -336,7 +264,7 @@ task copy {
         Array[File] files
         String destination
     }
-    
+
     command {
         mkdir -p ~{destination}
         cp -L -R -u ~{sep=' ' files} ~{destination}
